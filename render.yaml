@@ -30,9 +30,13 @@ services:
     buildCommand: |
       npm install && \
       npm run build && \
-      mkdir -p dist && \
       cp -r public/* dist/ 2>/dev/null || true && \
-      cp -r dist/app/* dist/app/ 2>/dev/null || true
+      # Set up landing page as root
+      if [ -f dist/landing.html ]; then \
+        # Replace index.html with landing.html
+        cp dist/landing.html dist/index.html && \
+        rm dist/landing.html; \
+      fi
     staticPublishPath: dist
     envVars:
       - key: VITE_API_BASE_URL
