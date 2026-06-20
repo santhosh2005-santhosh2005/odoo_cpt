@@ -8,6 +8,7 @@ import { useGetTablesQuery, useGetTableByTokenQuery } from "@/services/tableApi"
 import { useGetProductsQuery } from "@/services/productApi";
 import { useGetCategoriesQuery } from "@/services/categoryApi";
 import { useCreateOrderMutation, useUpdateOrderMutation } from "@/services/orderApi";
+import { useGetSettingsQuery } from "@/services/SettingsApi";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,6 +33,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useGetPromotionsQuery, useValidateCouponMutation } from "@/services/couponApi";
+import { QRCodeSVG } from "qrcode.react";
 
 type Step = "floor" | "table" | "menu" | "payment" | "status";
 
@@ -44,6 +46,11 @@ export default function SelfOrdering() {
   const [cart, setCart] = useState<any[]>([]);
   const [activeOrder, setActiveOrder] = useState<any>(null);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  const [transactionId, setTransactionId] = useState<string>("");
+  const [paymentTimeLeft, setPaymentTimeLeft] = useState<number | null>(null);
+  const { data: settingsData } = useGetSettingsQuery();
+  const settings = settingsData?.data;
 
   const [appliedCoupon, setAppliedCoupon] = useState<any | null>(null);
   const [couponInput, setCouponInput] = useState("");
@@ -85,6 +92,32 @@ export default function SelfOrdering() {
   const [modificationCountdown, setModificationCountdown] = useState<number | null>(null);
   const [isModifying, setIsModifying] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+
+  // Payment timer (2.5 minutes = 150 seconds)
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (paymentTimeLeft !== null && paymentTimeLeft > 0) {
+      timer = setInterval(() => {
+        setPaymentTimeLeft(prev => (prev !== null && prev > 0 ? prev - 1 : null));
+      }, 1000);
+    } else if (paymentTimeLeft === 0) {
+      setSelectedPaymentMethod(null);
+      toast.error("Payment timed out! Please try again.");
+    }
+    return () => clearInterval(timer);
+  }, [paymentTimeLeft]);
+
+  // Generate transaction ID when payment method is selected
+  useEffect(() => {
+    if (selectedPaymentMethod && selectedPaymentMethod !== "cash") {
+      const newTransactionId = `TXN-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      setTransactionId(newTransactionId);
+      setPaymentTimeLeft(150); // 2.5 minutes in seconds
+    } else {
+      setTransactionId("");
+      setPaymentTimeLeft(null);
+    }
+  }, [selectedPaymentMethod]);
 
   useEffect(() => {
     let timer: any;
@@ -939,37 +972,110 @@ export default function SelfOrdering() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-               {[
-                 { id: "upi", name: "Digital UPI", desc: "Instant mobile transfer", icon: Zap },
-                 { id: "card", name: "Credit/Debit", desc: "Global card processing", icon: LayoutGrid },
-                 { id: "cash", name: "Cash on Table", desc: "Physical currency", icon: DollarSign },
-                 { id: "digital", name: "Odoo Wallet", desc: "System credit balance", icon: Package }
-               ].map((method) => (
-                 <Card 
-                  key={method.id}
-                  onClick={() => handlePlaceOrder(method.id)}
-                  className="cursor-pointer bg-white border-4 border-deep-black p-8 rounded-none shadow-[8px_8px_0px_0px_#000] hover:bg-golden-yellow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all group"
-                 >
-                   <div className="flex items-center gap-6">
-                      <div className="p-4 bg-deep-black text-white border-2 border-deep-black shadow-[4px_4px_0px_0px_#F5B400] group-hover:shadow-none transition-all">
-                         <method.icon size={32} />
-                      </div>
-                      <div>
-                         <h3 className="text-2xl font-black italic uppercase tracking-tighter">{method.name}</h3>
-                         <p className="font-mono text-[10px] text-gray-400 uppercase tracking-widest group-hover:text-deep-black/60">{method.desc}</p>
-                      </div>
-                   </div>
-                 </Card>
-               ))}
-            </div>
+            {!selectedPaymentMethod ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   {[
+                     { id: "upi", name: "Digital UPI", desc: "Instant mobile transfer", icon: Zap },
+                     { id: "card", name: "Credit/Debit", desc: "Global card processing", icon: LayoutGrid },
+                     { id: "cash", name: "Cash on Table", desc: "Physical currency", icon: DollarSign },
+                     { id: "digital", name: "Odoo Wallet", desc: "System credit balance", icon: Package }
+                   ].map((method) => (
+                     <Card 
+                      key={method.id}
+                      onClick={() => {
+                        if (method.id === "cash") {
+                          handlePlaceOrder(method.id);
+                        } else {
+                          setSelectedPaymentMethod(method.id);
+                        }
+                      }}
+                      className="cursor-pointer bg-white border-4 border-deep-black p-8 rounded-none shadow-[8px_8px_0px_0px_#000] hover:bg-golden-yellow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all group"
+                     >
+                       <div className="flex items-center gap-6">
+                          <div className="p-4 bg-deep-black text-white border-2 border-deep-black shadow-[4px_4px_0px_0px_#F5B400] group-hover:shadow-none transition-all">
+                             <method.icon size={32} />
+                          </div>
+                          <div>
+                             <h3 className="text-2xl font-black italic uppercase tracking-tighter">{method.name}</h3>
+                             <p className="font-mono text-[10px] text-gray-400 uppercase tracking-widest group-hover:text-deep-black/60">{method.desc}</p>
+                          </div>
+                       </div>
+                     </Card>
+                   ))}
+                </div>
+              </>
+            ) : (
+              <div className="bg-white border-4 border-deep-black p-12 shadow-[12px_12px_0px_0px_#000] flex flex-col items-center gap-8">
+                {/* Transaction ID & Timer */}
+                <div className="w-full flex flex-col md:flex-row justify-between items-center gap-4">
+                  <p className="font-mono text-sm uppercase tracking-widest">
+                    Transaction ID: <span className="font-black text-deep-black">{transactionId}</span>
+                  </p>
+                  <div className={`px-6 py-2 border-4 border-deep-black ${paymentTimeLeft && paymentTimeLeft <= 30 ? "bg-red-500 text-white" : "bg-golden-yellow text-deep-black"}`}>
+                    <p className="font-black italic text-xl uppercase">
+                      Time Left: {Math.floor((paymentTimeLeft || 0) / 60)}:{String((paymentTimeLeft || 0) % 60).padStart(2, "0")}
+                    </p>
+                  </div>
+                </div>
+                
+                {selectedPaymentMethod === "upi" && (
+                  <>
+                    <p className="text-2xl font-black italic uppercase">Scan to Pay via UPI</p>
+                    <div className="bg-white p-8 border-4 border-deep-black">
+                      <QRCodeSVG 
+                        value={`upi://pay?pa=${settings?.upiId || "charanb9880@oksbi"}&pn=${settings?.businessName || "Odoo POS Cafe"}&am=${finalTotal.toFixed(2)}&cu=INR&tn=${transactionId}`}
+                        size={256}
+                        level="H"
+                      />
+                    </div>
+                    <p className="font-mono text-sm text-gray-500 uppercase tracking-widest">
+                      UPI ID: <span className="font-black text-deep-black">{settings?.upiId || "charanb9880@oksbi"}</span>
+                    </p>
+                  </>
+                )}
+                {selectedPaymentMethod === "digital" && (
+                  <>
+                    <p className="text-2xl font-black italic uppercase">Odoo Wallet Payment</p>
+                    <div className="bg-white p-8 border-4 border-deep-black">
+                      <QRCodeSVG 
+                        value={`odoo-wallet://pay?amount=${finalTotal.toFixed(2)}&txn=${transactionId}`}
+                        size={256}
+                        level="H"
+                      />
+                    </div>
+                  </>
+                )}
+                {selectedPaymentMethod === "card" && (
+                  <p className="text-2xl font-black italic uppercase text-center">
+                    Card payments coming soon! Please use UPI or Cash for now.
+                  </p>
+                )}
+                <div className="flex gap-6 w-full">
+                  <button 
+                    onClick={() => setSelectedPaymentMethod(null)}
+                    className="flex-1 py-4 border-4 border-deep-black text-deep-black font-black uppercase italic hover:bg-gray-100 transition-all"
+                  >
+                    Back to Payment Methods
+                  </button>
+                  <Button 
+                    onClick={() => handlePlaceOrder(selectedPaymentMethod)}
+                    className="flex-1 h-16 bg-golden-yellow text-deep-black rounded-none border-4 border-deep-black shadow-[8px_8px_0px_0px_#000] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all text-xl font-black uppercase italic"
+                  >
+                    I've Paid! Confirm Order
+                  </Button>
+                </div>
+              </div>
+            )}
             
-            <button 
-              onClick={() => setStep("menu")}
-              className="w-full py-6 border-4 border-dashed border-deep-black text-deep-black/40 font-black uppercase italic tracking-widest hover:text-deep-black hover:border-solid transition-all"
-            >
-              Back_to_Menu_Selection
-            </button>
+            {!selectedPaymentMethod && (
+              <button 
+                onClick={() => setStep("menu")}
+                className="w-full py-6 border-4 border-dashed border-deep-black text-deep-black/40 font-black uppercase italic tracking-widest hover:text-deep-black hover:border-solid transition-all"
+              >
+                Back_to_Menu_Selection
+              </button>
+            )}
           </div>
         </>
       )}
