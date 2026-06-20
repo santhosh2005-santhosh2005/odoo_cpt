@@ -38,4 +38,17 @@ tableSchema.pre("save", function (next) {
   next();
 });
 
+// Also generate token when using findOneAndUpdate
+tableSchema.pre("findOneAndUpdate", async function (next) {
+  const update: any = this.getUpdate();
+  if (!update.selfOrderToken) {
+    // Try to get current token from the document
+    const docToUpdate = await this.model.findOne(this.getQuery());
+    if (docToUpdate && !docToUpdate.selfOrderToken) {
+      this.setUpdate({ ...update, selfOrderToken: crypto.randomBytes(16).toString("hex") });
+    }
+  }
+  next();
+});
+
 export const Table = model<ITable>("Table", tableSchema);
