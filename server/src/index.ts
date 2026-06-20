@@ -86,7 +86,11 @@ io.on("connection", (socket) => {
 
 // Routes
 app.get("/", (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.json({
+    success: true,
+    message: "✅ My Cafe POS API is running!",
+    timestamp: new Date().toISOString()
+  });
 });
 app.get("/health", (req: Request, res: Response) => {
   res.json({
