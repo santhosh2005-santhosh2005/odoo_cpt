@@ -22,7 +22,6 @@ import { useNavigate } from "react-router";
 import { PlayCircle, Clock, Wallet, ShoppingCart, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { TableAssignment } from "@/components/TableAssignment";
-import { ApiKeyManagement } from "@/components/ApiKeyManagement";
 
 const weekdays = [
   "Saturday",
@@ -366,12 +365,7 @@ export const SettingManagement = () => {
             />
           </Section>
 
-          {/* API Key Management */}
-          <Section title="API Key Management">
-            <div className="md:col-span-2">
-              <ApiKeyManagement />
-            </div>
-          </Section>
+
 
           {/* POS Terminal Setup */}
           <POSTerminalSetup />
