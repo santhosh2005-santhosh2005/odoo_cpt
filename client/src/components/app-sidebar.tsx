@@ -9,6 +9,8 @@ import {
   Map,
   BarChart2,
   LayoutDashboard,
+  Percent,
+  BarChart3,
 } from "lucide-react";
 
 import {
@@ -31,24 +33,28 @@ export function AppSidebar() {
   const { role } = useSelector((state: RootState) => state.user);
   const location = useLocation();
 
-  const baseItems = [
+  const adminItems = [
     { title: "DASHBOARD", url: "/dashboard", icon: LayoutDashboard },
+    { title: "ANALYTICS", url: "/dashboard/analytics", icon: BarChart2 },
+    { title: "REPORTS", url: "/dashboard/reports", icon: BarChart3 },
+    { title: "FLOOR & TABLES", url: "/dashboard/floor", icon: Map },
+    { title: "MENU ITEMS", url: "/dashboard/menu", icon: Box },
+    { title: "CATEGORIES", url: "/dashboard/categories", icon: Tag },
+    { title: "COUPONS & PROMOS", url: "/dashboard/promotions", icon: Percent },
+    { title: "STAFF", url: "/dashboard/staff", icon: Users },
+    { title: "ORDERS HISTORY", url: "/dashboard/orders", icon: FileText },
+    { title: "SETTINGS", url: "/dashboard/settings", icon: Settings },
+  ];
+
+  const staffItems = [
     { title: "POS / PLACE ORDER", url: "/dashboard/pos", icon: ShoppingCart },
     { title: "KITCHEN DISPLAY", url: "/dashboard/kitchen", icon: ChefHat },
     { title: "FLOOR & TABLES", url: "/dashboard/floor", icon: Map },
     { title: "ORDERS HISTORY", url: "/dashboard/orders", icon: FileText },
+    { title: "WAITER STATION", url: "/dashboard/waiter-station", icon: Users },
   ];
 
-  const adminItems = [
-    { title: "ANALYTICS", url: "/dashboard/analytics", icon: BarChart2 },
-    { title: "MENU ITEMS", url: "/dashboard/menu", icon: Box },
-    { title: "CATEGORIES", url: "/dashboard/categories", icon: Tag },
-    { title: "STAFF", url: "/dashboard/staff", icon: Users },
-    { title: "REPORTS", url: "/dashboard/reports", icon: FileText },
-    { title: "SETTINGS", url: "/dashboard/settings", icon: Settings },
-  ];
-
-  const items = role === "admin" ? [...baseItems, ...adminItems] : baseItems;
+  const items = role === "admin" ? adminItems : staffItems;
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { data, isLoading } = useGetSettingsQuery({});
@@ -67,7 +73,7 @@ export function AppSidebar() {
         <div className="flex items-center gap-3 px-6 py-8 h-28 bg-deep-black border-b border-golden-yellow/20">
           <div className="w-14 h-14 bg-white p-1 border-2 border-golden-yellow shadow-[4px_4px_0px_0px_#F5B400]">
             <img
-              src="/logo.png"
+              src="/app/logo.png"
               alt="Cafe Logo"
               className="w-full h-full object-contain"
             />

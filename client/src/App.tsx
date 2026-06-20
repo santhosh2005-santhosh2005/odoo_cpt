@@ -1,42 +1,81 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
-import { BackgroundLines } from "@/components/ui/background-lines";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState, AppDispatch } from "./store";
+import { isTokenExpired } from "./utils/token";
+import { login } from "./store/userSlice";
 
 function App() {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const { token, isLoggedIn, role } = useSelector((state: RootState) => state.user);
+  
+  useEffect(() => {
+    console.log("=== App.tsx Debug ===");
+    console.log("Redux token:", token);
+    console.log("Redux isLoggedIn:", isLoggedIn);
+    const storedToken = localStorage.getItem("token");
+    console.log("Stored token in localStorage:", storedToken ? "Exists" : "Not found");
+    const storedUser = localStorage.getItem("user");
+    console.log("Stored user in localStorage:", storedUser ? "Exists" : "Not found");
+    
+    let isStoredTokenValid = false;
+    let parsedUserRole = role;
+    if (storedToken && storedUser) {
+      try {
+        isStoredTokenValid = !isTokenExpired(storedToken);
+        console.log("Stored token is valid:", isStoredTokenValid);
+        if (isStoredTokenValid && !isLoggedIn) {
+          const parsedUser = JSON.parse(storedUser);
+          parsedUserRole = parsedUser.role;
+          console.log("Restoring login from localStorage");
+          dispatch(
+            login({
+              id: parsedUser._id || parsedUser.id,
+              name: parsedUser.name,
+              email: parsedUser.email,
+              role: parsedUser.role,
+              token: storedToken
+            })
+          );
+        }
+      } catch (e) {
+        console.error("Error checking stored token or restoring user:", e);
+      }
+    }
+
+    let isReduxTokenValid = false;
+    if (token) {
+      try {
+        isReduxTokenValid = !isTokenExpired(token);
+        console.log("Redux token is valid:", isReduxTokenValid);
+      } catch (e) {
+        console.error("Error checking Redux token:", e);
+      }
+    }
+
+    const isValidToken = isReduxTokenValid || isStoredTokenValid;
+    console.log("Final isTokenValid:", isValidToken);
+    
+    if (isValidToken) {
+      const finalRole = role || parsedUserRole;
+      if (finalRole === "admin") {
+        console.log("Navigating to /dashboard (admin)");
+        navigate("/dashboard", { replace: true });
+      } else {
+        console.log("Navigating to /dashboard/pos (staff)");
+        navigate("/dashboard/pos", { replace: true });
+      }
+    } else {
+      console.log("Navigating to /login");
+      navigate("/login", { replace: true });
+    }
+  }, [navigate, token, isLoggedIn, role, dispatch]);
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4 sm:px-6 lg:px-8">
-      {/* Background Animation */}
-      <BackgroundLines children className="absolute inset-0 z-0" />
-
-      {/* Centered Landing Card */}
-      <div className="relative z-10 w-full max-w-md sm:max-w-lg rounded-2xl bg-white dark:bg-gray-800 p-6 sm:p-8 shadow-xl text-center">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800 dark:text-white mb-4">
-          <span className="flex items-center justify-center gap-3 sm:gap-4">
-            <img
-              src="/logo.png"
-              alt="Cafe Sync Logo"
-              className="w-14 h-14 sm:w-16 sm:h-16"
-            />
-            <span>Cafe Sync</span>
-          </span>
-          <span className="block text-xl sm:text-2xl font-semibold mt-2 text-blue-600 dark:text-blue-400">
-            POS System
-          </span>
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300 mb-6 text-base sm:text-lg leading-relaxed">
-          Welcome to <strong>Cafe Sync</strong>, where the aroma of freshly brewed coffee meets the efficiency of perfectly written code.
-          This isn't just a Point of Sale system; it's a meticulously crafted solution for the tech-savvy café.
-          <br />
-          Engineered with <strong>MERN</strong> and <strong>TypeScript</strong>, it manages orders, tracks sales, and runs your café with code-like precision.
-        </p>
-        <button
-          onClick={() => navigate("/login")}
-          className="w-full sm:w-auto rounded-xl bg-blue-600 px-6 py-3 text-white font-medium text-base sm:text-lg shadow-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-all duration-300"
-        >
-          Start Coding Your Cafe's Success
-        </button>
-      </div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+      <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <p className="mt-4 text-lg font-semibold text-gray-700">Redirecting to Odoo Cafe...</p>
     </div>
   );
 }
