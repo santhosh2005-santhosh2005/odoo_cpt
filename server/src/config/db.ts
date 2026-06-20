@@ -3,7 +3,12 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI;
+let MONGO_URI = process.env.MONGO_URI;
+
+// Clean up MONGO_URI to remove empty query params
+if (MONGO_URI) {
+  MONGO_URI = MONGO_URI.replace(/[\?&]([^=]+)(?=&|$)/g, "").replace(/\?$/, "");
+}
 
 if (!MONGO_URI) {
   throw new Error("❌ MONGO_URI is not defined in .env file");
