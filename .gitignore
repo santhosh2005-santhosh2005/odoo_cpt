@@ -33,3 +33,9 @@ Thumbs.db
 *.mp4
 *.jpeg
 *.jpg
+
+# Exceptions for odoofinal public assets
+!client/public/odoofinal/**/*.mp4
+!client/public/odoofinal/**/*.jpg
+!client/public/odoofinal/**/*.webp
+!client/public/odoofinal/**/*.png

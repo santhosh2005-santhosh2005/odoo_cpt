@@ -105,7 +105,7 @@ export default function Login() {
       <div className="w-full md:w-1/3 bg-deep-black text-warm-white p-12 md:p-20 flex flex-col justify-between border-b-8 md:border-b-0 md:border-r-8 border-golden-yellow">
         <div>
           <div className="w-24 h-24 bg-white p-2 mb-12">
-            <img src="/logo.png" alt="Odoo POS Cafe" className="w-full h-full object-contain" />
+            <img src="/app/logo.png" alt="Odoo POS Cafe" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-6xl md:text-8xl leading-[0.85] italic tracking-tighter mb-8">
             RESTAURANT<br />
@@ -195,7 +195,7 @@ export default function Login() {
 
           <div className="flex justify-between items-center pt-8 border-t-2 border-deep-black/10">
             <a 
-              href="http://localhost:3000" 
+              href="/app/" 
               className="font-black text-sm text-deep-black hover:text-golden-yellow uppercase italic tracking-tighter flex items-center gap-1 group"
             >
               <span className="text-golden-yellow group-hover:pr-2 transition-all">←</span> RETURN_TO_HOME

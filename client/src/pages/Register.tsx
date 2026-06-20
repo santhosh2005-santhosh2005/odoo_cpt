@@ -40,7 +40,7 @@ export default function Register() {
       <div className="w-full md:w-1/3 bg-golden-yellow text-deep-black p-12 md:p-20 flex flex-col justify-between border-b-8 md:border-b-0 md:border-l-8 border-deep-black">
         <div>
           <div className="bg-deep-black text-white p-4 inline-block mb-12">
-            <img src="/logo.png" alt="Logo" className="w-16 h-16 invert" />
+            <img src="/app/logo.png" alt="Logo" className="w-16 h-16 invert" />
           </div>
           <h1 className="text-6xl md:text-8xl leading-[0.85] italic tracking-tighter mb-8">
             JOIN THE<br />
